@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Consuming Remote Data: Using xhr</title>
+</head>
+<body>
+  <div id="output"></div>
+  <script>
+    function printDom(msg){
+      document.getElementById('output')
+      .innerHTML += `<div>${msg}</div>`;
+    }
+
+    var httpRequest = new XMLHttpRequest();
+    httpRequest.open('GET', 'data.json', true);
+    
+    httpRequest.onreadystatechange = function(){
+      if(httpRequest.readyState === 4){
+        printDom('Request completed!');
+        var statusType = (httpRequest.status / 100) | 0;
+        switch (statusType) {
+          case 2:
+            //document.body.innerHTML += xhr.responseText;
+            //console.log(xhr.responseText);
+            //printDom('Success!');
+            var body = JSON.parse(xhr.responseText);
+            printDom(body.name);
+            break;
+          case 4:
+          case 5:
+            printDom(xhr.responseText);
+          break;
+        }
+      }
+    }
+
+    request.send(url, {
+      success: function(res){
+
+      },
+    error: function(err){
+
+    }
+    });
+  </script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Consuming Remote Data: $.ajax()</title>
+</head>
+
+<body>
+  <div id="output"></div>
+  <script src="bower_components/jquery/dist/jquery.js"></script>
+  <script>
+    if (typeof(window.$) === 'undefined') {
+      alert('jQuery not <loaded!></loaded!> \nrun "$ bower install" on the CMD/Terminal');
+    }
+    var url = 'data.json';
+    var print = function() {
+      var $output = $('#output'),
+        line = new Array(50).join('-');
+      return function(msg) {
+        $('<strong/>')
+          .before()
+          .html(msg + '<br/>')
+          .appendTo($output);
+        $output.append(line)
+          .append('<br/>');
+      }
+    }();
+    $.ajax({
+      url: url,
+      cors: true,
+      contentType: 'application/json',
+      success: function(data) {
+        for (var key in data) {
+          print(`${key}: ${data[key]}`);
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Consuming Remote Data: $.ajax()</title>
+  <style>
+    .message {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root">
+    <h1>$.getJSON() and $.post()</h1>
+    <div class="controls">
+      <label for="">Name:
+        <input id="tb-name" type="text">
+      </label>
+      <br/>
+      <label for="">age:
+        <input id="tb-age" type="number">
+      </label>
+      <br/>
+      <label for="">isCool:
+        <input id="tb-isCool" type="checkbox">
+      </label>
+      <br/>
+      <button id="btn-save">Save</button>
+    </div>
+    <div class="items"></div>
+    <div class="messages">
+      <span class="success message"></span>
+      <span class="error message"></span>
+    </div>
+  </div>
+  <script src="bower_components/jquery/dist/jquery.js"></script>
+  <script>
+    if (typeof(window.$) === 'undefined') {
+      alert('jQuery not <loaded!></loaded!> \nrun "$ bower install" on the CMD/Terminal');
+    }
+    var url = 'http://localhost:8886/api/people';
+    var db = (function() {
+      function save(data) {
+        var promise = new Promise(function(resolve, reject) {
+          $.ajax(url, {
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(data) {
+              resolve(data);
+            },
+            error: function(err) {
+              reject({
+                err: JSON.parse(err.responseText).err
+              });
+            }
+          })
+        });
+        return promise;
+      }
+      function load() {
+        var promise = new Promise(function(resolve, reject) {
+          $.getJSON(url, function(data) {
+              resolve(data);
+            })
+            .error(function(err) {
+              reject({
+                message: JSON.parse(err.responseText).err
+              });
+            });
+        });
+        return promise;
+      }
+      return {
+        save, load
+      };
+    }());
+    $(function() {
+      /* test */
+      $('#tb-name').val('Doncho');
+      $('#tb-age').val('25');
+      var $list = $('<ul/>')
+        .appendTo('#root');
+      db.load()
+        .then(function(items) {
+          items.forEach(function(item) {
+            $('<li/>')
+              .html(JSON.stringify(item))
+              .appendTo($list);
+          });
+        });
+      var $tbName = $('#tb-name'),
+        $tbAge = $('#tb-age'),
+        $tbIsCool = $('#tb-isCool'),
+        $successBox = $('.success'),
+        $errorBox = $('.error');
+      $('#btn-save').on('click', function() {
+        var name = $tbName.val(),
+          age = +$tbAge.val(),
+          isCool = !!$tbIsCool.checked;
+        var data = {
+          name, age, isCool
+        };
+        $tbName.val('');
+        $tbAge.val('');
+        $tbIsCool.val('');
+        db.save(data)
+          .then(function(item) {
+            $('<li/>')
+              .html(JSON.stringify(item))
+              .appendTo($list);
+            $successBox.html('Item created successfully')
+              .fadeIn(2000, function() {
+                $successBox.fadeOut(2000, function() {
+                  $successBox.html('');
+                });
+              });
+          }, function(err) {
+            $errorBox.html(err.message)
+              .fadeIn(2000, function() {
+                $errorBox.fadeOut(2000, function() {
+                  $errorBox.html('');
+                });
+              });
+          });
+      });
+    });
+  </script>
+</body>
+
+</html>
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <style>
+    .error{
+      color: red;
+    }
+    .success{
+      color: green; 
+    }
+  </style>
+</head>
+
+<body>
+  <script src="bower_components/jquery/dist/jquery.js"></script>
+  <h1>Hello!!!</h1>
+  <label for="">Name:
+    <input id="tb-name" type="text">
+  </label>
+  <button id="button">Add</button>
+  <div class="messages">
+    <span class="success message"></span>
+    <span class="error message"></span>
+  </div>
+  <ul id="people-list"></ul>
+  <script>
+    var $list = $('#people-list');
+    var db = (function() {
+      var url = 'http://localhost:8886/api/people';
+      function save(data) {
+        var promise = new Promise(function(resolve, reject) {
+          $.ajax({
+            url: url,
+            method: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function(data) {
+              resolve(data);
+            },
+            error: function(err) {
+              reject(JSON.parse(err.responseText));
+            }
+          });
+        });
+        return promise;
+      }
+      function load() {
+        var promise = new Promise(function(resolve, reject) {
+          $.getJSON(url, function(data) {
+              resolve(data);
+            })
+            .error(function(err) {
+              reject(JSON.parse(err.responseText));
+            });
+        });
+        return promise;
+      }
+      return {
+        save,
+        load
+      }
+    }());
+    function parseObjectsToLi(objects, parseFunc) {
+      var $items = $('<div/>');
+      objects.forEach(function(obj) {
+        $('<li/>')
+          .html(parseFunc(obj))
+          .appendTo($items);
+      });
+      return $items.html();
+    }
+    function personToJSON(person) {
+      return JSON.stringify(person);
+    }
+    db.load()
+      .then(function(people) {
+        $list.append(parseObjectsToLi(people, personToJSON));
+      });
+    $('#button').on('click', function() {
+      var person = {
+        name: $('#tb-name').val(),
+        age: 18,
+        isCool: true
+      };
+      $('#tb-name').val('');
+      db.save(person)
+        .then(function(person) {
+          $list.append(parseObjectsToLi([person], personToJSON));
+        }, function(err) {
+          $('.error.message').html(err.err)
+            .fadeIn(2000, function() {
+              $('.error.message')
+                .fadeOut(2000);
+            });
+        });
+    });
+    /*
+(index):92 Object {err: "Name must be a string with length between 3 and 30"}*/
+  </script>
+
+</body>
+
+</html>

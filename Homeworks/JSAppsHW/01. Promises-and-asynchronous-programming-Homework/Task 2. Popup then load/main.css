@@ -1,0 +1,23 @@
+html, body, div {
+    margin: 0;
+    padding: 0;
+}
+
+.popup-msg {
+    margin: 30px 10px;
+    padding: 10px;
+    display: none;
+    text-align: center;
+    background-color: #812;
+    color: #aa3;
+    font-size: 18px;
+    font-family: Courier New, Courier, monospace;
+    position: absolute;
+    left: 20%;
+    border-radius: 10px;
+    box-shadow: 10px 10px 15px #888888;
+}
+
+.vissible {
+    display: inline-block;
+}

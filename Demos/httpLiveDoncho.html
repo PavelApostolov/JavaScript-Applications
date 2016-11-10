@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Consuming Remote Data: Using xhr</title>
+</head>
+<body>
+  <div id="output"></div>
+  <script>
+    function printDom(msg){
+      document.getElementById('output')
+      .innerHTML += `<div>${msg}</div>`;
+    }
+
+    
+    var request = (function(){
+        function send(url, options){
+            var xhr = new XMLHttpRequest();
+            options = options || {};
+            options.verb = options.verb || 'GET';
+            xhr.open(options.verb, url, true);
+
+            xhr.onreadystatechange = function(){
+                var statusType;
+                if(xhr.readyState === 4){
+                    statusType = (xhr.status/100) | 0;
+                    switch (statusType){
+                        case 2:
+                        if(typeof options.success === 'function'){
+                            options.success(xhr.responseText);
+                        }
+                            break;
+                        case 4:
+                        case 5:
+                            if(typeof options.error === 'function'){
+                                options.error(xhr.responseText);
+                            }
+                            break;
+                    }
+                }
+            }
+
+            options.body = options.body || null;
+            xhr.send(options.body);
+        }
+
+        return {
+            send
+        };
+    }());
+
+    var url = 'httpLiveDoncho.html';
+    request.send(url, {
+        headers: {
+            'content-type': 'application/json' 
+        },
+      success: function(res){
+        printDom(res);
+        request.send(url,{
+            success: function(data){
+                printDom(data);
+            }
+        })
+      },
+    error: function(err){
+        printDom('Error: ' + err);
+    }
+    });
+  </script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Consuming Remote Data: Using xhr</title>
+  <style>
+      message{display: none}
+  </style>
+</head>
+<body>
+  <div id="output"></div>
+  <div class="container"></div>
+  <div class="messages">
+      <span class="message error"></span>
+  </div>
+  <script src="bower_components/jquery/dist/jquery.js"></script>
+  <script>
+    function printDom(msg){
+      document.getElementById('output')
+      .innerHTML += `<div>${msg}</div>`;
+    }
+
+    var url = 'data.json';
+    $.ajax({
+        url: url,
+        contentType: 'application/json',
+        success: function(data){
+            printDom(JSON.stringify(data));
+        }
+    });
+
+    $.ajax({
+        url: 'data.json',
+        contentType: 'application/json'
+    }).then(function(data){ //.success/.done
+        printDom(data.name);
+    }, function(err){
+
+    });
+
+    $.ajax('partials/details.html',{
+        success: function(html){
+            //$(html).appendTo(document.body);
+            $(document.body).append(html);
+        }
+    });
+
+    /////
+    function getData(){
+        var promise = new Promise(function(resolve, reject){
+            return $.ajax({
+                url: 'data.json',
+                success: function(data){
+                    resolve(data);
+                }
+            });
+        });
+        return promise;
+    }
+    getData()
+        .then(function(data){
+            printDom(data.age);
+        });
+
+    /////
+    $.getJSON(url, function(data){
+        printDom(data.name);
+    }).error(function(err){ //.fail
+        alert('error');
+    });
+
+    /////
+    $('.container').load('partials/details.html'); //works only with html
+    $('body').on('mouseover', '.partial', function(){
+        $(this).css('baclgroumd', 'blue');
+    });
+
+    /////
+    $('<div />').load('partials/details.html'); //works only with html
+    .on('mouseover', '.partial', function(){
+        $(this).css('baclgroumd', 'blue');
+    })
+    .appendTo(document.body);
+
+    ///////
+    var $div = $('<div />')
+    .html('something')
+    .on('mouseover', function(){
+        alert('Alert!');
+    });
+    $div.appendTo(document.body);
+
+    ///////
+    var data = {
+        name: 'Jane',
+        age: 18
+    };
+    
+    $.ajax(url,{
+        type: 'POST',
+        data: JSON.stringify(data),
+        contentType: 'application/json',
+        success: function(){
+            $.ajax(url,{
+                contentType: 'application/json',
+                success: function(data){
+                    console.log(data);
+                }
+            });
+        },
+        error: function(err){
+            var err = JSON.parse(error.responseText);
+            console.log(err);
+            $('.message.error').html(err.err)
+            .fadeIn(2000)
+            .fadeOut(2000);
+        }   
+    })
+    </script>
+</body>
+</html>
